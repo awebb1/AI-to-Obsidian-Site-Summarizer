@@ -12,15 +12,15 @@ async function handleSummarize(pageData, settings) {
   const { 
     apiKey, apiProvider = 'anthropic', model, obsidianApiKey, folderPath = '',
     summaryMode = 'standard', enableCheatsheet, cheatsheetPath,
-    enableStudyQuestions, studyQuestionsPath
+    enableStudyQuestions, studyQuestionsPath, customPrompt
   } = settings;
   
   if (!model) {
     throw new Error('No model selected. Please open the extension popup, go to Settings, enter your API key, wait for models to load, and select a model.');
   }
   
-  // Build the main summary prompt
-  const prompt = buildPrompt(pageData, summaryMode);
+  // Build the main summary prompt (use custom prompt if provided)
+  const prompt = buildPrompt(pageData, summaryMode, customPrompt);
   
   // Call AI API for main summary
   let result;
@@ -99,18 +99,26 @@ async function handleSummarize(pageData, settings) {
 
 // ============ PROMPTS ============
 
-const STANDARD_PROMPT = `You are creating concise study notes from a webpage. Summarize the following page into well-structured Markdown notes.
+const STANDARD_PROMPT = `You are creating concise study notes from a webpage for Obsidian. Use Obsidian-compatible Markdown formatting.
 
 Requirements:
-- Use clear headings and subheadings
+- Start with a Table of Contents using Obsidian internal links: [[#Section Name]]
+- Use ## for main sections, ### for subsections
 - Include key concepts, definitions, and important points
 - Use bullet points and numbered lists where appropriate
+- Use Obsidian callouts for important info: > [!note], > [!tip], > [!warning], > [!important]
 - Use tables for comparisons if relevant
-- Include code blocks for any code snippets
-- Reference important images using markdown syntax with their URLs
+- Include code blocks with language tags for any code snippets
+- Reference important images using markdown: ![description](url)
 - Keep it concise but comprehensive
-- Add a "Key Takeaways" section at the end
-- Include the source URL at the bottom
+- Add a "## Key Takeaways" section at the end
+- Include source link at the bottom
+
+Table of Contents format example:
+## Table of Contents
+- [[#Overview]]
+- [[#Key Concepts]]
+- [[#Key Takeaways]]
 
 Page Title: {title}
 Page URL: {url}
@@ -121,22 +129,36 @@ Source: {hostname}
 {content}
 --- END CONTENT ---
 
-Generate the Markdown notes now:`;
+Generate the Obsidian Markdown notes now (start with Table of Contents):`;
 
-const STUDY_PROMPT = `You are creating detailed study notes from an educational webpage. Create comprehensive, well-structured Markdown notes optimized for learning and retention.
+const STUDY_PROMPT = `You are creating detailed study notes from an educational webpage for Obsidian. Use Obsidian-compatible Markdown formatting optimized for learning and retention.
 
 Requirements:
-- Use clear hierarchical headings (##, ###, ####)
+- Start with a Table of Contents using Obsidian internal links: [[#Section Name]]
+- Use ## for main sections, ### for subsections, #### for details
 - Include all key concepts, definitions, and terminology
-- Highlight important formulas, commands, or syntax in code blocks
+- Use Obsidian callouts for highlighting:
+  - > [!note] for general notes
+  - > [!tip] for helpful tips
+  - > [!warning] for cautions
+  - > [!example] for examples
+  - > [!important] for critical information
+- Highlight important formulas, commands, or syntax in code blocks with language tags
 - Use bullet points for lists of items or steps
 - Use numbered lists for sequential processes
 - Include tables for comparisons or structured data
-- Reference images with markdown syntax and their URLs
+- Reference images using: ![description](url)
 - Add practical examples where relevant
-- Include a "Summary" section with the main points
-- Add a "Key Takeaways" section at the end
-- Include the source URL at the bottom
+- Include a "## Summary" section with main points
+- Add a "## Key Takeaways" section at the end
+- Include source link at the bottom
+
+Table of Contents format:
+## Table of Contents
+- [[#Overview]]
+- [[#Key Concepts]]
+- [[#Summary]]
+- [[#Key Takeaways]]
 
 Page Title: {title}
 Page URL: {url}
@@ -147,7 +169,7 @@ Source: {hostname}
 {content}
 --- END CONTENT ---
 
-Generate comprehensive study notes now:`;
+Generate comprehensive Obsidian study notes now (start with Table of Contents):`;
 
 const CHEATSHEET_PROMPT = `Extract the most important quick-reference information from this page for a cheatsheet. Focus on:
 
@@ -204,12 +226,18 @@ Page Title: {title}
 
 Generate the study questions now (start directly with first > [!question], no introduction):`;
 
-function buildPrompt(pageData, mode) {
+function buildPrompt(pageData, mode, customPrompt = null) {
   const imageList = pageData.images.length > 0
     ? `\n\nImages on the page:\n${pageData.images.map(img => `- ${img.alt || 'Image'}: ${img.src}`).join('\n')}`
     : '';
   
-  const template = mode === 'study' ? STUDY_PROMPT : STANDARD_PROMPT;
+  // Use custom prompt if provided, otherwise use mode-based default
+  let template;
+  if (customPrompt && customPrompt.trim()) {
+    template = customPrompt;
+  } else {
+    template = mode === 'study' ? STUDY_PROMPT : STANDARD_PROMPT;
+  }
   
   return template
     .replace(/\{title\}/g, pageData.title)

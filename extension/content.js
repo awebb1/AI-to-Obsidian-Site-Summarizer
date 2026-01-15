@@ -385,7 +385,7 @@ async function handleSummarize() {
     const settings = await chrome.storage.sync.get([
       'apiKey', 'apiProvider', 'model', 'obsidianApiKey', 'folderPath',
       'summaryMode', 'enableCheatsheet', 'cheatsheetPath', 
-      'enableStudyQuestions', 'studyQuestionsPath'
+      'enableStudyQuestions', 'studyQuestionsPath', 'customPrompt'
     ]);
     
     if (!settings.apiKey) {
@@ -408,6 +408,10 @@ async function handleSummarize() {
     const mode = settings.summaryMode || 'standard';
     const modeLabel = mode === 'study' ? '📚 Study Mode' : '📝 Standard';
     addLog(`Mode: ${modeLabel}`, 'info');
+    
+    if (settings.customPrompt && settings.customPrompt.trim()) {
+      addLog('Using custom prompt ✓', 'info');
+    }
     
     if (mode === 'study') {
       if (settings.enableCheatsheet) addLog('→ Cheatsheet enabled', 'info');

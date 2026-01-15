@@ -698,18 +698,26 @@ document.getElementById('saveFolderBtn').addEventListener('click', async () => {
 
 // ============ PROMPT TAB ============
 
-const DEFAULT_PROMPT = `You are creating concise study notes from a webpage. Summarize the following page into well-structured Markdown notes.
+const DEFAULT_PROMPT = `You are creating concise study notes from a webpage for Obsidian. Use Obsidian-compatible Markdown formatting.
 
 Requirements:
-- Use clear headings and subheadings
+- Start with a Table of Contents using Obsidian internal links: [[#Section Name]]
+- Use ## for main sections, ### for subsections
 - Include key concepts, definitions, and important points
 - Use bullet points and numbered lists where appropriate
+- Use Obsidian callouts for important info: > [!note], > [!tip], > [!warning], > [!important]
 - Use tables for comparisons if relevant
-- Include code blocks for any code snippets
-- Reference important images using markdown syntax with their URLs
+- Include code blocks with language tags for any code snippets
+- Reference important images using markdown: ![description](url)
 - Keep it concise but comprehensive
-- Add a "Key Takeaways" section at the end
-- Include the source URL at the bottom
+- Add a "## Key Takeaways" section at the end
+- Include source link at the bottom
+
+Table of Contents format example:
+## Table of Contents
+- [[#Overview]]
+- [[#Key Concepts]]
+- [[#Key Takeaways]]
 
 Page Title: {title}
 Page URL: {url}
@@ -720,7 +728,7 @@ Source: {hostname}
 {content}
 --- END CONTENT ---
 
-Generate the Markdown notes now:`;
+Generate the Obsidian Markdown notes now (start with Table of Contents):`;
 
 async function loadPrompt() {
   const settings = await chrome.storage.sync.get(['customPrompt']);
