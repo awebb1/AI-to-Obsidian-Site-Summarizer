@@ -926,8 +926,8 @@ document.getElementById('saveModeBtn').addEventListener('click', async () => {
     cheatsheetFilename,
     cheatsheetPath,
     enableStudyQuestions,
-    studyQuestionsFolder,
-    studyQuestionsFilename,
+    studyQuestionsFolder: questionsFolder,
+    studyQuestionsFilename: questionsFilename,
     studyQuestionsPath
   };
   
